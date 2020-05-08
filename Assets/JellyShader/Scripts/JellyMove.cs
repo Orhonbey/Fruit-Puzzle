@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class JellyClickReceiver : MonoBehaviour
+public class JellyMove : MonoBehaviour
 {
-    RaycastHit hit;
-    Ray clickRay;
     Renderer modelRenderer;
     public float timeFix;
     public float maxTimeCount;
