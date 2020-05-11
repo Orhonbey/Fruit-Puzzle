@@ -24,16 +24,16 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _Amplitude: 0.1
-    - _ControlTime: 0
-    - _Frequency: 10
+    - _Amplitude: 0.96
+    - _ControlTime: 85.81079
+    - _Frequency: 125
     - _Glossiness: 0.7
-    - _ImpactSpeed: 0.5
-    - _MaxWaveDistortion: 1
-    - _Metallic: 0.25
-    - _WaveFalloff: 4
+    - _ImpactSpeed: 0.38
+    - _MaxWaveDistortion: 1.54
+    - _Metallic: 0.225
+    - _WaveFalloff: 1.34
     - _WaveSpeed: -5
     m_Colors:
-    - _Color: {r: 0.2264151, g: 0.020054793, b: 0, a: 1}
+    - _Color: {r: 0.22745098, g: 0.019607844, b: 0, a: 1}
     - _ImpactOrigin: {r: -5, g: 0, b: 0, a: 0}
-    - _ModelOrigin: {r: 0, g: 0, b: 0, a: 0}
+    - _ModelOrigin: {r: 0, g: 0, b: -3.32, a: 7.09}
