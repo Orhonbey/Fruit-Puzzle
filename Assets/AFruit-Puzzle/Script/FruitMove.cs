@@ -7,6 +7,7 @@ using UnityEngineInternal;
 
 public class FruitMove : MonoBehaviour
 {
+    #region //----> Variable
     Vector3 firstFingerPos;
     public float rotateSpeed;
     public float scaleSpeed = 0.1f;
@@ -14,6 +15,7 @@ public class FruitMove : MonoBehaviour
     public string chocolatePlatfromTag;
     public string chocolateFaceTag;
     public string stopPlatform;
+    public FinishScene finishScene;
     public List<Transform> rotateControls;
     public List<GameObject> chocolateCoating;
     public Transform right;
@@ -23,18 +25,28 @@ public class FruitMove : MonoBehaviour
     public GameObject fruitMain;
     public ParticleSystem chocolateSplash;
     public ParticleSystem starExplosion;
+    public ParticleSystem chocolateDecal;
+    public ParticleSystem confitte;
     public CPC_CameraPath cameraPathFinish;
     bool isMove = false;
+    private ParticleSystem chocolateDecalClone;
+    public RectTransform levelfail;
+    public bool isActive;
+    #endregion
     private void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (isActive)
         {
-            firstFingerPos = Input.mousePosition;
-        }
-        else if (Input.GetMouseButtonUp(0))
-        {
-            if (!isMove)
-                FruitMoveController(SelectWay(firstFingerPos, Input.mousePosition));
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                firstFingerPos = Input.mousePosition;
+            }
+            else if (Input.GetMouseButtonUp(0))
+            {
+                if (!isMove)
+                    FruitMoveController(SelectWay(firstFingerPos, Input.mousePosition));
+            }
         }
     }
     private void FruitMoveController(FingerWay way)
@@ -103,7 +115,9 @@ public class FruitMove : MonoBehaviour
         stopPlatform.CountReduction(way);
         if (PlatformManager.ins.active.FailController())
         {
-            Debug.Log("Fail");
+            levelfail.gameObject.SetActive(true);
+            LeanTween.scale(levelfail, Vector3.zero, 0);
+            LeanTween.scale(levelfail, Vector3.one, 1f).setEaseInOutQuart().setOnComplete(finishScene.ButtonCallback);
         }
     }
     private bool WayController(Vector3 rayDirection, out RaycastHit hit)
@@ -129,10 +143,11 @@ public class FruitMove : MonoBehaviour
         LeanTween.rotateAroundLocal(rotPoint, axis, angle, rotateSpeed).setOnComplete(
         x =>
         {
-            FinishCallback(hit, rotPoint.transform);
+            FruitRotateMoveCallback(hit, rotPoint.transform);
             isMove = false;
         });
         FruitScale(rotateFruit, 0.19f, scaleSpeed);
+        ChocolateDecalPlay();
     }
     private void FruitRotateMoveStop(GameObject rotPoint, Vector3 axis, float angle)
     {
@@ -165,6 +180,10 @@ public class FruitMove : MonoBehaviour
             {
                 ChocolateProccer();
             }
+            else if (hit.transform.CompareTag(emptyPlatfromTag))
+            {
+                ChocolateDecalPlace();
+            }
             isMove = false;
         });
         LeanTween.moveLocalY(rotPoint, rotPoint.transform.localPosition.y + 0.06f, 0.15f).setEaseInOutBack().setOnComplete(
@@ -172,9 +191,36 @@ public class FruitMove : MonoBehaviour
         {
             LeanTween.moveLocalY(rotPoint, rotPoint.transform.localPosition.y - 0.06f, 0.15f);
         });
+        ChocolateDecalPlay();
     }
-
-    private void FinishCallback(RaycastHit hit, Transform way)
+    private void ChocolateDecalPlace()
+    {
+        Ray ray = new Ray(rotateFruit.transform.position, Vector3.down);
+        if (Physics.Raycast(ray, out RaycastHit hit, 1))
+        {
+            if (hit.transform.CompareTag(chocolateFaceTag))
+            {
+                if (hit.transform.GetChild(0).gameObject.activeSelf)
+                {
+                    var cloneDecalChocolate = Instantiate(chocolateDecal);
+                    Vector3 setDecalPos = hit.transform.position;
+                    setDecalPos.y += 0.0015f;
+                    cloneDecalChocolate.transform.position = setDecalPos;
+                    chocolateDecalClone = cloneDecalChocolate;
+                }
+            }
+        }
+    }
+    private void ChocolateDecalPlay()
+    {
+        if (chocolateDecalClone != null)
+        {
+            chocolateDecalClone.gameObject.SetActive(true);
+            chocolateDecalClone.Play();
+            Destroy(chocolateDecalClone.gameObject, chocolateDecalClone.main.duration);
+        }
+    }
+    private void FruitRotateMoveCallback(RaycastHit hit, Transform way)
     {
         Vector3 pos = transform.localPosition;
         pos.x = hit.transform.position.x;
@@ -192,18 +238,22 @@ public class FruitMove : MonoBehaviour
         {
             ChocolateProccer();
         }
+        else if (hit.transform.CompareTag(emptyPlatfromTag))
+        {
+            ChocolateDecalPlace();
+        }
     }
     private void ChocolateProccer()
     {
-        if (ChocolateFaceControl())
+        if (IsChocolateFacePlace())
         {
             if (FinishControl())
             {
-                FinishEffect();
+                FinishEffectBegin();
             }
         }
     }
-    private bool ChocolateFaceControl()
+    private bool IsChocolateFacePlace()
     {
         Ray ray = new Ray(rotateFruit.transform.position, Vector3.down);
         if (Physics.Raycast(ray, out RaycastHit hit, 1))
@@ -216,7 +266,7 @@ public class FruitMove : MonoBehaviour
                     var cloneParticle = Instantiate(chocolateSplash, hit.point, Quaternion.identity);
                     cloneParticle.gameObject.SetActive(true);
                     cloneParticle.Play();
-                    Destroy(cloneParticle, 1.5f);
+                    Destroy(cloneParticle.gameObject, 1.5f);
                 }
             }
             return true;
@@ -233,6 +283,39 @@ public class FruitMove : MonoBehaviour
             }
         }
         return true;
+    }
+    private void FinishEffectBegin()
+    {
+        LeanTween.moveLocalY(rotateFruit, 0.3f, 0.3f).setOnComplete(
+        m =>
+        {
+            ForkMove();
+            confitte.Play();
+            var cloneExplosion = Instantiate(starExplosion, rotateFruit.transform.position, Quaternion.identity);
+            cloneExplosion.gameObject.SetActive(true);
+            Destroy(cloneExplosion, 1.5f);
+            LeanTween.rotateAroundLocal(rotateFruit, Vector3.down, 180, 0.3f);
+            finishScene.ChocolateCapRotate();
+        });
+    }
+    private void ForkMove()
+    {
+        rotateFruit.transform.SetParent(finishPostion);
+        LeanTween.rotateAroundLocal(finishPostion.gameObject, Vector3.down, 180, 0.6f).setDelay(0.3f).setOnComplete(
+        x =>
+        {
+            cameraPathFinish.SetOnComplete(CameraComplete);
+            cameraPathFinish.PlayPath(1);
+            rotateFruit.SetActive(false);
+        });
+    }
+    private void CameraComplete()
+    {
+        finishScene.FinishEffectStart();
+    }
+    public void IsGameActive()
+    {
+        isActive = true;
     }
     public FingerWay SelectWay(Vector3 firstFingerPos, Vector3 finishFingerPos)
     {
@@ -268,33 +351,6 @@ public class FruitMove : MonoBehaviour
                 return FingerWay.top;
             }
         }
-    }
-    private void FinishEffect()
-    {
-        LeanTween.moveLocalY(rotateFruit, 0.3f, 0.3f).setOnComplete(
-        m =>
-        {
-            LeanTween.rotateAroundLocal(rotateFruit, Vector3.down, 180, 0.3f).setOnComplete(ForkCallback);
-            var cloneExplosion = Instantiate(starExplosion, rotateFruit.transform.position, Quaternion.identity);
-            cloneExplosion.gameObject.SetActive(true);
-            Destroy(cloneExplosion, 1.5f);
-        });
-    }
-    private void ForkCallback()
-    {
-        rotateFruit.transform.SetParent(finishPostion);
-        LeanTween.rotateAroundLocal(finishPostion.gameObject, Vector3.down, 180, 0.6f).setOnComplete(
-        x=> 
-        {
-            cameraPathFinish.SetOnComplete(Complete);
-            cameraPathFinish.PlayPath(1);
-            rotateFruit.SetActive(false);
-        });
-    }
-
-    private void Complete()
-    {
-        Debug.Log("TEst Camera");
     }
 }
 

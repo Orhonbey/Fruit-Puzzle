@@ -66,6 +66,7 @@ public class CPC_CameraPathInspector : Editor
     private SerializedProperty loopedProperty;
     private SerializedProperty alwaysShowProperty;
     private SerializedProperty afterLoopProperty;
+    private SerializedProperty onComplete;
 
     private int selectedIndex = -1;
 
@@ -122,6 +123,7 @@ public class CPC_CameraPathInspector : Editor
         DrawWaypointList();
         GUILayout.Space(10);
         DrawRawValues();
+        EditorGUILayout.PropertyField(onComplete,true);
         serializedObjectTarget.ApplyModifiedProperties();
     }
 
@@ -169,6 +171,7 @@ public class CPC_CameraPathInspector : Editor
         afterLoopProperty = serializedObjectTarget.FindProperty("afterLoop");
         playOnAwakeProperty = serializedObjectTarget.FindProperty("playOnAwake");
         playOnAwakeTimeProperty = serializedObjectTarget.FindProperty("playOnAwakeTime");
+        onComplete = serializedObjectTarget.FindProperty("onComplete");
     }
 
     void SetupReorderableList()

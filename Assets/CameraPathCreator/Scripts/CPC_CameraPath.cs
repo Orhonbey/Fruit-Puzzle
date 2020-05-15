@@ -68,7 +68,7 @@ public class CPC_CameraPath : MonoBehaviour
     public bool looped = false;
     public bool alwaysShow = true;
     public CPC_EAfterLoop afterLoop = CPC_EAfterLoop.Continue;
-    public UnityAction onComplete;
+    public UnityEvent onComplete;
 
     private int currentWaypointIndex;
     private float currentTimeInWaypoint;
@@ -233,8 +233,8 @@ public class CPC_CameraPath : MonoBehaviour
     /// </summary>
     public void SetOnComplete(UnityAction callback)
     {
-        onComplete = null;
-        onComplete += callback;
+        onComplete.RemoveAllListeners();
+        onComplete.AddListener(callback);
     }
     IEnumerator FollowPath(float time)
     {
